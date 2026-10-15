@@ -1,0 +1,226 @@
+
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cinema Booking</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #10131c;
+  color: white;
+}
+header {
+  background: #1b2030;
+  padding: 20px 7%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.logo { color: #ff4757; font-size: 25px; font-weight: bold; }
+nav a { color: white; margin-left: 18px; text-decoration: none; }
+.hero { text-align: center; padding: 40px 15px; }
+.hero h1 { font-size: 36px; }
+.hero p { color: #b8c0d4; }
+.movies {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 20px;
+  padding: 20px 7%;
+}
+.movie {
+  background: #202638;
+  padding: 18px;
+  border-radius: 14px;
+  text-align: center;
+}
+.poster { font-size: 65px; padding: 15px; }
+button, select {
+  padding: 12px;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+}
+button { background: #ff4757; color: white; font-weight: bold; }
+button:hover { background: #e63243; }
+.booking {
+  background: #202638;
+  max-width: 600px;
+  margin: 30px auto;
+  padding: 25px;
+  border-radius: 14px;
+}
+label { display: block; margin: 15px 0 8px; }
+select { width: 100%; background: #fff; }
+.screen {
+  background: #dce4ff;
+  color: #10131c;
+  text-align: center;
+  padding: 10px;
+  margin: 25px 0;
+  border-radius: 50% 50% 5px 5px;
+}
+.seats {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 9px;
+  max-width: 340px;
+  margin: auto;
+}
+.seat {
+  background: #3b4560;
+  padding: 12px 0;
+  text-align: center;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.seat.selected { background: #2ed573; color: #10131c; }
+.seat.taken { background: #777; cursor: not-allowed; opacity: .6; }
+.info { text-align: center; line-height: 1.8; margin-top: 20px; }
+#result { color: #2ed573; text-align: center; }
+footer { text-align: center; padding: 25px; color: #aab1c4; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🎬 CINEMA</div>
+  <nav><a href="#films">Фильмдер</a><a href="#booking">Броньдау</a></nav>
+</header>
+
+<section class="hero">
+  <h1>Сүйікті фильміңді таңда!</h1>
+  <p>Билетті онлайн броньда — кино әлеміне бірге саяхатта.</p>
+</section>
+
+<h2 id="films" style="text-align:center">🎥 Фильмдер</h2>
+<section class="movies">
+  <div class="movie">
+    <div class="poster">🚀</div>
+    <h3>Ғарыш әлемі</h3>
+    <p>Фантастика · 120 минут</p>
+    <button onclick="chooseMovie('Ғарыш әлемі')">Таңдау</button>
+  </div>
+  <div class="movie">
+    <div class="poster">🦸</div>
+    <h3>Супер қаһарман</h3>
+    <p>Экшн · 110 минут</p>
+    <button onclick="chooseMovie('Супер қаһарман')">Таңдау</button>
+  </div>
+  <div class="movie">
+    <div class="poster">😂</div>
+    <h3>Күлкі кеші</h3>
+    <p>Комедия · 95 минут</p>
+    <button onclick="chooseMovie('Күлкі кеші')">Таңдау</button>
+  </div>
+</section>
+
+<section class="booking" id="booking">
+  <h2>🎟️ Билет броньдау</h2>
+
+  <label for="movie">Фильмді таңдаңыз:</label>
+  <select id="movie" onchange="resetSeats()">
+    <option>Ғарыш әлемі</option>
+    <option>Супер қаһарман</option>
+    <option>Күлкі кеші</option>
+  </select>
+
+  <label for="time">Сеанс уақыты:</label>
+  <select id="time">
+    <option>12:00</option>
+    <option>15:00</option>
+    <option>18:00</option>
+    <option>21:00</option>
+  </select>
+
+  <div class="screen">ЭКРАН</div>
+  <div class="seats" id="seats"></div>
+
+  <div class="info">
+    <p>🟩 Таңдалған орын &nbsp; ⬛ Бос орын &nbsp; ⬜ Бос емес</p>
+    <p>Билет бағасы: <b>2000 ₸</b></p>
+    <p>Таңдалған орындар: <b id="count">0</b></p>
+    <p>Жалпы сомасы: <b id="total">0 ₸</b></p>
+    <button onclick="bookTicket()">Броньды растау</button>
+  </div>
+  <h3 id="result"></h3>
+</section>
+
+<footer>© 2026 Cinema Booking | Оқу жобасы</footer>
+
+<script>
+const price = 2000;
+let selected = [];
+
+function createSeats() {
+  const area = document.getElementById("seats");
+  area.innerHTML = "";
+  selected = [];
+
+  for (let i = 1; i <= 30; i++) {
+    const seat = document.createElement("div");
+    seat.className = "seat";
+    seat.textContent = i;
+    
+    // Демонстрация үшін кейбір орындар бос емес
+    if ([5, 12, 19, 26].includes(i)) {
+      seat.classList.add("taken");
+    } else {
+      seat.onclick = () => {
+        if (selected.includes(i)) {
+          selected = selected.filter(n => n !== i);
+          seat.classList.remove("selected");
+        } else {
+          selected.push(i);
+          seat.classList.add("selected");
+        }
+        updateTotal();
+      };
+    }
+    area.appendChild(seat);
+  }
+  updateTotal();
+}
+
+function updateTotal() {
+  document.getElementById("count").textContent = selected.length;
+  document.getElementById("total").textContent =
+    (selected.length * price).toLocaleString("kk-KZ") + " ₸";
+}
+
+function chooseMovie(name) {
+  document.getElementById("movie").value = name;
+  document.getElementById("booking").scrollIntoView({behavior:"smooth"});
+}
+
+function resetSeats() {
+  document.getElementById("result").textContent = "";
+  createSeats();
+}
+
+function bookTicket() {
+  const result = document.getElementById("result");
+  if (selected.length === 0) {
+    result.style.color = "#ff4757";
+    result.textContent = "Алдымен орын таңдаңыз!";
+    return;
+  }
+
+  result.style.color = "#2ed573";
+  result.textContent =
+    "✅ Бронь қабылданды! " +
+    document.getElementById("movie").value +
+    " | Сеанс: " + document.getElementById("time").value +
+    " | Орындар: " + selected.join(", ") +
+    " | Сома: " + (selected.length * price) + " ₸";
+
+  // Бұл демо-нұсқада бронь дерекқорға сақталмайды
+}
+
+createSeats();
+</script>
+</body>
+</html>
